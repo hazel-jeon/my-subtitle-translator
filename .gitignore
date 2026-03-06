@@ -1,7 +1,27 @@
-*.txt
-*.srt
-*.vtt
-
+# Python cache
 __pycache__/
-venv/
+*.py[cod]
+*$py.class
+
+# secrets (do not commit sensitive information)
 .env
+.env.*
+secrets.toml
+.streamlit/secrets.toml
+*.key
+*.secret
+GEMINI_API_KEY*
+
+# ignore study scripts and logs
+study_script_*.txt
+*.log
+
+# system files
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# editor temporary files
+.vscode/
+.idea/
+*.swp

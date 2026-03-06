@@ -1,6 +1,8 @@
 from youtube_transcript_api import NoTranscriptFound, TranscriptsDisabled, YouTubeTranscriptApi
 from deep_translator import GoogleTranslator
+import google.generativeai as genai
 import re
+import os
 
 def get_video_id(url):
     pattern = r'(?:v=|\/|be\/)([a-zA-Z0-9_-]{11})'
@@ -50,7 +52,6 @@ def run_translator():
         print(f"[*] 자막 추출 및 한국어 번역을 시작합니다... (시간 소요될 수 있음)")
 
         fetched = target_transcript.fetch()
-        translator = GoogleTranslator(source='auto', target='ko')
 
         # 전체 원문 합치기 (번역용)
         full_original = ' '.join(
@@ -59,21 +60,53 @@ def run_translator():
             if snippet.text.strip() and snippet.text.strip() != '[Music]'
         )
 
-        # 문장 단위로 분할
+        # 문장 단위 분할 (fallback용)
         sentences = re.split(r'(?<=[.!?])\s+', full_original.strip())
         sentences = [s.strip() for s in sentences if s.strip()]
 
-        # 번역
-        translated_sentences = []
+        # Gemini 설정
         try:
-            translated_sentences = translator.translate_batch(sentences)
-            print("[+] 번역 완료")
-        except Exception as trans_err:
-            print(f"[!] 번역 실패: {trans_err}")
-            print("[!] 원문 그대로 사용합니다.")
-            translated_sentences = sentences
+            gemini_api_key = os.getenv("GEMINI_API_KEY") or open(os.path.expanduser("~/.streamlit/secrets.toml")).read()
+            # secrets.toml에서 직접 읽는 대신 환경변수 우선, 또는 파일에서 파싱 (간단 구현)
+            # 실제로는 st.secrets를 쓰지만 콘솔 스크립트라 os.getenv 사용
+            # 더 정확히 하려면 secrets.toml 파싱 로직 추가 가능
+            genai.configure(api_key=gemini_api_key.strip().split('=')[1].strip('" '))
+            model = genai.GenerativeModel('gemini-2.5-flash')  # 최신 모델
+        except Exception as key_err:
+            print(f"[!] Gemini API 키 로드 실패: {key_err}")
+            print("[!] Google Translate로 대체합니다.")
+            translated_full = ' '.join(GoogleTranslator(source='auto', target='ko').translate_batch(sentences))
+        else:
+            # Gemini 프롬프트 (섞인 언어도 한국어로 번역 지시)
+            prompt = f"""
+You are a professional Korean subtitle translator.
+Follow these instructions **strictly and absolutely**:
 
-        translated_full = ' '.join(translated_sentences)
+- All output must be **100% natural, fluent, and idiomatic Korean only**.
+- **Do NOT use Chinese, English, Japanese, Thai, Vietnamese, or any other language at all.**
+- **All output must be written entirely in Korean characters (Hangul).**
+- **Never mix languages, never insert foreign words unless they are proper nouns.**
+- If the original text contains mixed languages, **translate everything into natural Korean**.
+- Replace [Music] with [음악].
+- Maintain a conversational tone and subtitle style.
+- Connect short subtitle fragments contextually.
+
+Now translate the following text **entirely into Korean**:
+
+Text to translate:
+{full_original}
+"""
+
+            try:
+                print("[+] Gemini 번역 시작...")
+                response = model.generate_content(prompt)
+                translated_full = response.text.strip()
+                print("[+] Gemini 번역 완료")
+            except Exception as gemini_err:
+                print(f"[!] Gemini 번역 오류: {gemini_err}")
+                print("[!] Google Translate로 대체합니다.")
+                translated_full = ' '.join(GoogleTranslator(source='auto', target='ko').translate_batch(sentences))
+
         translated_full = translated_full.replace('[Music]', '[음악]')
 
         filename = f"study_script_{video_id}.txt"
