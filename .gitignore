@@ -1,0 +1,7 @@
+*.txt
+*.srt
+*.vtt
+
+__pycache__/
+venv/
+.env
