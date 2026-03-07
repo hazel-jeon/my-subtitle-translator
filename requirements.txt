@@ -1,4 +1,0 @@
-youtube-transcript-api
-deep-translator
-streamlit
-google-generativeai
