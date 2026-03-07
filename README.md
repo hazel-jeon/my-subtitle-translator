@@ -29,7 +29,12 @@ A powerful Python tool that extracts subtitles from YouTube videos in various la
    ```bash
    pip install youtube-transcript-api>=1.2.0 --upgrade
    ```
-   It's recommended to have youtube-transcript-api>=1.2.0 in your requirements.txt file.
+
+3. **(Optional) Install tomli for Python 3.10 or below:**
+   Python 3.11+ includes `tomllib` built-in. If you're on an older version, install `tomli` manually:
+   ```bash
+   pip install tomli
+   ```
 
 ## 🚀 How to Use
 1. Run the main script:
@@ -42,23 +47,25 @@ A powerful Python tool that extracts subtitles from YouTube videos in various la
 3. The script will automatically:
 - Detect available subtitles
 - Prioritize manually created subtitles → fall back to auto-generated ones
-- Translate to Korean
+- Translate to Korean using Gemini API (falls back to Google Translate if key is unavailable)
 - Save the result as a .txt file (e.g. study_script_VIDEOID.txt)
 
+4. Open the generated .txt file to review the bilingual script with timestamps!
+
 ### Common issues & fixes (2026 version):
-- 'YouTubeTranscriptApi' has no attribute 'list_transcripts'
-→ Fixed in latest code: Use YouTubeTranscriptApi().list(video_id) instead of class method.
-- 'FetchedTranscriptSnippet' object is not subscriptable'
-→ Fixed: Access with snippet.text and snippet.start instead of entry['text'].
+- `'YouTubeTranscriptApi' has no attribute 'list_transcripts'`
+→ Fixed in latest code: Use `YouTubeTranscriptApi().list(video_id)` instead of class method.
+- `'FetchedTranscriptSnippet' object is not subscriptable`
+→ Fixed: Access with `snippet.text` and `snippet.start` instead of `entry['text']`.
 - No subtitles found (TranscriptsDisabled / NoTranscriptFound)
 → Video has no subtitles, or YouTube blocked access. Try a different video or add proxies/cookies (advanced).
+- `GEMINI_API_KEY를 찾을 수 없습니다` / Gemini not working
+→ Check that the key is set via environment variable or `.streamlit/secrets.toml`. See API Key Setup below.
 - Still having issues? Reinstall the library:
    ```bash
    pip uninstall youtube-transcript-api
    pip install youtube-transcript-api --upgrade
    ```
-
-4. Open the generated .txt file to review the bilingual script with timestamps!
 
 ## API Key Setup (Required for Gemini Translation)
 
@@ -70,7 +77,7 @@ If the API key is not set, it automatically falls back to Google Translate.
 2. Sign in with your Google account
 3. Click **"Create API key"** → copy the key (starts with `AIzaSy...`)
 
-### 2. Set the API Key as an Environment Variable
+### 2. Option A — Environment Variable (Recommended)
 Do **not** hardcode the key in the script. Use an environment variable instead.
 
 **macOS / Linux**
@@ -85,16 +92,24 @@ set GEMINI_API_KEY=AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxx
 python main.py
 ```
 
-### 3. Make it Permanent (so you don’t have to set it every time)
+### 3. Option B — `.streamlit/secrets.toml`
+If you're also running the Streamlit app (`app.py`), you can store the key in one place:
 
-- Windows:
-Go to Control Panel → System → Advanced system settings → Environment Variables
-Under "User variables" → New
-Variable name: GEMINI_API_KEY
-Variable value: your API key
+```toml
+# .streamlit/secrets.toml
+GEMINI_API_KEY = "AIzaSyxxxxxxxxxxxxxxxxxxxxxxxxxxxx"
+```
 
-- macOS / Linux:
-Open terminal and edit your shell config file:
+Both `main.py` and `app.py` will automatically read from this file.
+
+### 4. Make the Environment Variable Permanent
+
+- **Windows:**
+Go to Control Panel → System → Advanced system settings → Environment Variables.
+Under "User variables" → New.
+Variable name: `GEMINI_API_KEY` / Variable value: your API key.
+
+- **macOS / Linux:**
 ```bash
 nano ~/.zshrc    # or ~/.bash_profile if using bash
 ```
@@ -107,26 +122,19 @@ Save (Ctrl+O → Enter → Ctrl+X) and reload:
 source ~/.zshrc
 ```
 
-### 4. Notes
-
-Never commit your API key to GitHub (it will be exposed publicly).
-If you lose the key or want a new one, just generate another at the link above.
-The script will still work without the key (using Google Translate fallback).
+### 5. Notes
+- Never commit your API key to GitHub (it will be exposed publicly).
+- If you lose the key or want a new one, just generate another at the link above.
+- The script will still work without the key (using Google Translate fallback).
 
 Happy translating! If you run into any issues, feel free to open an Issue on GitHub.
 
 ## ⚠️ Disclaimer
 
-- Educational Purpose Only: This tool is intended for personal language learning and research purposes.
-- Copyright Notice: All original video content and subtitles are the intellectual property of their respective copyright owners (e.g., Ludo Studio, BBC Studios).
-- Data Usage: This script does not host or distribute copyrighted data. It only provides a technical method to process subtitles for personal use. Users are responsible for complying with YouTube's Terms of Service.
-- Non-official API Warning: This tool relies on the unofficial youtube-transcript-api library, which scrapes YouTube data. It may break if YouTube changes its internal structure. Always keep the library updated.
+- **Educational Purpose Only:** This tool is intended for personal language learning and research purposes.
+- **Copyright Notice:** All original video content and subtitles are the intellectual property of their respective copyright owners (e.g., Ludo Studio, BBC Studios).
+- **Data Usage:** This script does not host or distribute copyrighted data. It only provides a technical method to process subtitles for personal use. Users are responsible for complying with YouTube's Terms of Service.
+- **Non-official API Warning:** This tool relies on the unofficial youtube-transcript-api library, which scrapes YouTube data. It may break if YouTube changes its internal structure. Always keep the library updated.
 
 ## 📝 License
 This project is open-source and available under the MIT License.
-```text
-
-Just replace `YOUR_USERNAME` and `YOUR_REPO_NAME` with your actual GitHub info.
-
-Let me know if you want to add anything else (e.g., screenshots, more detailed vocab builder section, or contribution guidelines)!
-```
